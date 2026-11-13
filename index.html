@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Physics Made Easy - Learn Class 9 Physics through simple explanations, examples and quizzes.">
+  <title>Physics Made Easy | Class 9</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="#" class="logo">⚛ Physics Made Easy</a>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#topics">Topics</a>
+      <a href="#about">About</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-content">
+        <span class="tag">CLASS 9 PHYSICS</span>
+        <h1>Understand Physics.<br><span>Explore the World.</span></h1>
+        <p>
+          Learn physics through simple explanations, everyday examples,
+          interactive activities and fun quizzes.
+        </p>
+        <a href="#topics" class="primary-btn">Start Learning →</a>
+      </div>
+      <div class="hero-icon">⚛</div>
+    </section>
+
+    <section class="search-section">
+      <h2>What do you want to learn today?</h2>
+      <div class="search-box">
+        <input id="searchInput" type="text"
+          placeholder="Search a topic, e.g. Motion...">
+        <button id="searchButton">Search</button>
+      </div>
+      <p id="searchMessage" class="message"></p>
+    </section>
+
+    <section class="topics-section" id="topics">
+      <div class="section-heading">
+        <span class="tag">EXPLORE PHYSICS</span>
+        <h2>Choose Your Topic</h2>
+        <p>Start with a topic and learn at your own pace.</p>
+      </div>
+
+      <div class="topic-grid" id="topicGrid">
+        <article class="topic-card" data-topic="motion">
+          <div class="topic-icon">🚗</div>
+          <h3>Motion</h3>
+          <p>Understand distance, displacement, speed, velocity and acceleration.</p>
+          <button class="learn-btn" data-topic="motion">Learn More →</button>
+        </article>
+
+        <article class="topic-card" data-topic="force">
+          <div class="topic-icon">🏀</div>
+          <h3>Force and Laws of Motion</h3>
+          <p>Explore force, inertia and Newton's three laws of motion.</p>
+          <button class="learn-btn" data-topic="force">Learn More →</button>
+        </article>
+
+        <article class="topic-card" data-topic="gravitation">
+          <div class="topic-icon">🌍</div>
+          <h3>Gravitation</h3>
+          <p>Discover gravity, free fall, mass and weight.</p>
+          <button class="learn-btn" data-topic="gravitation">Learn More →</button>
+        </article>
+
+        <article class="topic-card" data-topic="work">
+          <div class="topic-icon">⚡</div>
+          <h3>Work and Energy</h3>
+          <p>Learn about work, kinetic energy and potential energy.</p>
+          <button class="learn-btn" data-topic="work">Learn More →</button>
+        </article>
+
+        <article class="topic-card" data-topic="sound">
+          <div class="topic-icon">🔊</div>
+          <h3>Sound</h3>
+          <p>Understand sound waves, frequency, amplitude and echoes.</p>
+          <button class="learn-btn" data-topic="sound">Learn More →</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="lesson-section" id="lesson">
+      <div class="section-heading">
+        <span class="tag">YOUR LESSON</span>
+        <h2 id="lessonTitle">Motion</h2>
+        <p id="lessonSubtitle">Understanding how objects move.</p>
+      </div>
+
+      <div class="lesson-content">
+        <div class="lesson-card">
+          <h3>📘 Simple Explanation</h3>
+          <p id="lessonExplanation"></p>
+        </div>
+
+        <div class="lesson-card">
+          <h3>🌍 Everyday Example</h3>
+          <p id="lessonExample"></p>
+        </div>
+
+        <div class="lesson-card">
+          <h3>📐 Important Formula</h3>
+          <p id="lessonFormula" class="formula"></p>
+          <p id="lessonCalculation"></p>
+        </div>
+
+        <div class="lesson-card">
+          <h3>💡 Remember This</h3>
+          <p id="lessonRemember"></p>
+        </div>
+      </div>
+
+      <div class="lesson-card graph-card" id="motionGraph">
+        <h3>📊 Interactive Distance–Time Graph</h3>
+        <p>Observe how distance changes with time for an object moving at constant speed.</p>
+        <canvas id="graphCanvas" width="650" height="300"></canvas>
+        <p class="graph-note">A straight sloping line represents uniform motion.</p>
+      </div>
+
+      <div class="quiz-card">
+        <h3>🧠 Test Your Understanding</h3>
+        <p id="quizQuestion"></p>
+        <div id="quizOptions" class="quiz-options"></div>
+        <p id="quizFeedback" class="feedback" aria-live="polite"></p>
+        <button id="nextQuestion" class="primary-btn" hidden>Try Another Question</button>
+      </div>
+    </section>
+
+    <section class="about-section" id="about">
+      <span class="tag">ABOUT THE WEBSITE</span>
+      <h2>Physics Made Easy</h2>
+      <p>
+        Our goal is to make physics easier and more interesting for Class 9
+        students through simple explanations, real-life examples, formulas
+        and interactive quizzes.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 Physics Made Easy | Learn Physics with Curiosity ⚛</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
