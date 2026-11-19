@@ -1,2 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPTICS LAB – Explore the Science of Image Formation</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <b class="logo">OPTICS LAB</b>
+  <div><a href="#learn">Learn</a><a href="#lab">Virtual Lab</a><a href="#formulas">Formulas</a>
+  <button id="theme" title="Switch light / dark mode" aria-label="Switch theme">◐</button></div>
+</nav>
 
+<header class="hero">
+  <div>
+    <h1>Welcome to OPTICS LAB</h1>
+    <p class="sub">Discover how mirrors and lenses create images through interactive experiments and visual simulations.</p>
+    <p class="tag">Don't Just Learn Physics. See It, Experiment With It and Understand It.</p>
+    <div class="btns"><a class="btn" href="#learn">Start Exploring</a><a class="btn alt" href="#lab">Enter Virtual Lab</a><a class="btn alt" href="#formulas">Test Your Knowledge</a></div>
+  </div>
+  <svg viewBox="0 0 400 260" class="art" role="img" aria-label="Convex lens forming an inverted image">
+    <line x1="0" y1="130" x2="400" y2="130" class="ax"/>
+    <path d="M200 30Q245 130 200 230Q155 130 200 30Z" class="lens"/>
+    <path d="M60 130V70M60 70l-5 9M60 70l5 9" class="ob"/>
+    <path d="M330 130V190M330 190l-5-9M330 190l5-9" class="im"/>
+    <path d="M60 70H200L330 190" class="ray"/><path d="M60 70L200 130L330 190" class="ray r2"/>
+    <text x="52" y="150">Object</text><text x="312" y="115">Image</text>
+  </svg>
+</header>
+
+<main>
+<section id="learn"><h2>Learn the Basics</h2>
+  <p class="lead">Eleven ideas you need before you enter the lab.</p>
+  <div id="terms" class="grid"></div>
+</section>
+
+<section id="lab"><h2>Virtual Optics Lab</h2>
+  <p class="lead">Drag the object on the canvas, or use the sliders. Every ray is calculated from the mirror/lens formula, not drawn from a picture.</p>
+  <div class="tabs" id="tabs">
+    <button data-t="cm" class="on">Concave Mirror</button><button data-t="vm">Convex Mirror</button>
+    <button data-t="cl">Convex Lens</button><button data-t="vl">Concave Lens</button>
+  </div>
+  <div class="card">
+    <canvas id="cv" height="400" aria-label="Ray diagram"></canvas>
+    <div id="presets" class="btns"></div>
+    <div class="ctl">
+      <label>Object distance <output id="od"></output><input id="d" type="range" min="1" max="90" step="0.1" value="40"></label>
+      <label>Focal length |f| <output id="of"></output><input id="F" type="range" min="5" max="30" step="0.5" value="15"></label>
+      <label>Object height <output id="oh"></output><input id="h" type="range" min="1" max="8" step="0.5" value="5"></label>
+    </div>
+    <div class="btns"><button
 
