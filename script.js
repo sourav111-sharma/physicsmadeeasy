@@ -86,5 +86,72 @@ function draw() {
       L(-d, h, 0, 0, C[1]); out(0, mir ? -d : d, -h, C[1]);                                    // ray 2: to P / through O
       const den = mir ? d + f : d - f;                                                         // ray 3: through (or towards) a focus
       if (Math.abs(den) > 1e-9) {
-        const y3 = mir
+        const y3 = mir ? h * f / den : -h * f / den; L(-d, h, 0, y3, C[2]); out(y3, mir ? -1 : 1, 0, C[2]);
+        if (type == 'vm') L(0, y3, f, 0, C[2], true); if (type == 'vl') L(0, y3, -f, 0, C[2], true);
+      }
+    }
+    arrow(-d, h, '#22d3ee', false);
+    if (fin) arrow(v, m * h, '#a78bfa', !real);
+  }
+  g.fillStyle = tx; g.textAlign = 'left'; g.fillText('Drag to move the object', 12, H - 12);
+}
 
+function ui() {
+  const {mir, f, v, m, real} = info(), {d, h, inf} = S, fin = isFinite(v), a = Math.abs(m);
+  const f1 = x => isFinite(x) ? x.toFixed(1) : '∞';
+  $('#od').textContent = inf ? '∞' : d.toFixed(1) + ' cm'; $('#of').textContent = S.F.toFixed(1) + ' cm'; $('#oh').textContent = h.toFixed(1) + ' cm';
+  const size = inf ? 'Point-sized' : !fin ? 'Highly magnified' : a > 1.005 ? 'Magnified' : a < .995 ? 'Diminished' : 'Same size';
+  const R = [['Object distance u (cm)', inf ? '−∞' : f1(-d)], ['Image distance v (cm)', f1(v)], ['Focal length f (cm)', f1(f)],
+    ['Magnification m', inf ? '→ 0' : fin ? m.toFixed(2) : '∞'], ['Image height h′ (cm)', inf ? '≈ 0' : fin ? (m * h).toFixed(2) : '∞'],
+    ['Nature', fin ? (real ? 'Real' : 'Virtual') : 'At infinity'], ['Orientation', inf ? 'Inverted (real) / erect (virtual)' : fin ? (m < 0 ? 'Inverted' : 'Erect') : '—'], ['Size', size]];
+  $('#read').innerHTML = R.map(([k, x]) => `<div class="card"><b>${x}</b><span>${k}</span></div>`).join('');
+  $('#why').textContent = WHY[S.type];
+}
+function sync() { $('#d').value = S.d; $('#F').value = S.F; $('#h').value = S.h; draw(); ui(); }
+
+function presets() {
+  const mir = S.type[1] == 'm', two = S.type[0] == 'v';
+  const L = two ? [['At infinity', null], ['At a finite distance', 2]] :
+    (mir ? ['At infinity', 'Beyond C', 'At C', 'Between C and F', 'At F', 'Between F and P'] :
+      ['At infinity', 'Beyond 2F₁', 'At 2F₁', 'Between F₁ and 2F₁', 'At F₁', 'Between F₁ and O']).map((t, i) => [t, [null, 3, 2, 1.5, 1, .5][i]]);
+  $('#presets').innerHTML = L.map(([t, k], i) => `<button data-k="${k}">${t}</button>`).join('');
+}
+$('#presets').onclick = e => {
+  const k = e.target.dataset.k; if (k === undefined) return;
+  S.play = false; S.inf = k == 'null'; if (!S.inf) S.d = Math.min(90, +k * S.F); sync();
+};
+$('#tabs').onclick = e => {
+  if (!e.target.dataset.t) return;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b == e.target));
+  S.type = e.target.dataset.t; S.inf = false; S.d = 40; S.play = false; presets(); sync();
+};
+['d', 'F', 'h'].forEach(k => $('#' + k).oninput = e => { S[k] = +e.target.value; if (k == 'd') S.inf = false; sync(); });
+$('#rays').onchange = e => { S.rays = e.target.checked; draw(); };
+$('#play').onclick = () => S.play = true; $('#pause').onclick = () => S.play = false;
+$('#reset').onclick = () => { Object.assign(S, {d: 40, F: 15, h: 5, inf: false, play: false}); sync(); };
+$('#theme').onclick = () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme == 'dark' ? 'light' : 'dark'; draw(); };
+
+let drag = 0;
+const pt = e => {
+  const r = cv.getBoundingClientRect(), px = (e.clientX - r.left) * cv.width / r.width, x0 = cv.width * .6, s = (x0 - 25) / 90;
+  S.d = Math.min(90, Math.max(1, (x0 - px) / s)); S.inf = false; S.play = false; sync();
+};
+cv.onpointerdown = e => { drag = 1; cv.setPointerCapture(e.pointerId); pt(e); };
+cv.onpointermove = e => drag && pt(e); cv.onpointerup = () => drag = 0;
+(function loop() { if (S.play) { S.d -= .25; if (S.d < 2) S.d = 90; S.inf = false; sync(); } requestAnimationFrame(loop); })();
+const fit = () => { cv.width = cv.clientWidth; draw(); };
+addEventListener('resize', fit);
+
+// formula calculator
+$('#calc').onclick = () => {
+  const a = $('#ct').value == 'm' ? 1 : -1, n = id => $(id).value === '' ? null : +$(id).value;
+  let f = n('#cf'), u = n('#cu'), v = n('#cvv'), o;
+  if ([f, u, v].filter(x => x === null).length != 1) o = 'Fill exactly two of f, u and v, and leave one empty.';
+  else {
+    if (f === null) f = 1 / (1 / v + a / u); else if (v === null) v = 1 / (1 / f - a / u); else u = a / (1 / f - 1 / v);
+    const m = a == 1 ? -v / u : v / u;
+    o = `f = ${f.toFixed(2)} cm, u = ${u.toFixed(2)} cm, v = ${v.toFixed(2)} cm, m = ${m.toFixed(2)}`;
+  }
+  $('#cout').textContent = o;
+};
+presets(); fit(); ui();
