@@ -1,22 +1,43 @@
 
-# OPTICS LAB – Explore the Science of Image Formation
+# OPTICS LAB v2.0 – Advanced Interactive Physics
 
-Interactive physics site on spherical mirrors and lenses. Plain HTML, CSS and JavaScript; no build step, no paid services.
+**"Don't Just Learn Physics. See It, Experiment With It and Understand It."**
 
-## Run
-Open `index.html` in a browser.
+Optics Lab is a premium, interactive educational platform designed for Class 10 and Class 12 Physics students. Version 2.0 introduces a fully rewritten mathematical ray-tracing engine, a guided learning mode, and interactive visualizations to help students master the complexities of light reflection and refraction.
 
-## Deploy on GitHub Pages
-1. Push `index.html`, `style.css`, `script.js` and `README.md` to a repository.
-2. Settings → Pages → Source: `main` branch, `/ (root)`.
+## ✨ What's New in Version 2.0?
+- **Guided Laboratory Mode:** Challenges students to place objects at specific points (like the Center of Curvature) to achieve specific image results, moving beyond passive observation.
+- **Interactive Sign Convention Visualizer:** A dedicated visual coordinate system that demystifies positive and negative values for object distance, image distance, and focal length.
+- **Interactive Glossary:** Key physics terms feature hoverable tooltips that instantly explain fundamental concepts without cluttering the UI.
+- **Advanced Physics Quiz Engine:** A multi-question assessment module with score tracking and detailed explanations for every correct and incorrect answer.
+- **Immersive UI/UX:** Features a dynamic photon-particle animated background, glassmorphism design elements, and seamless light/dark mode toggling.
 
-## How the ray tracer works (`script.js`)
-- Cartesian sign convention, origin at the pole (mirror) or optical centre (lens), light travelling left to right.
-- Mirror: `1/v + 1/u = 1/f`, `m = -v/u`. Lens: `1/v - 1/u = 1/f`, `m = v/u`.
-- Concave mirror and concave lens have `f < 0`; convex mirror and convex lens have `f > 0`.
-- Each frame, `info()` computes `v` and `m` from the slider values; `draw()` traces three principal rays from the object tip. Virtual images are shown with dashed backward extensions.
-- Special cases: object at infinity (parallel rays, image at F), object at F (image distance is infinite, rays come out parallel).
-- Edit `TERMS`, `WHY` and `presets()` to change text and presets.
+## 🔬 Core Features
+- **Virtual Optics Lab:** Real-time HTML5 Canvas-based ray tracing for Concave Mirrors, Convex Mirrors, Convex Lenses, and Concave Lenses. Drag-and-drop the object arrow to instantly see the updated image and rays.
+- **Live Telemetry Engine:** Calculates exact image distance ($v$) and magnification ($m$) using the mirror ($1/f = 1/v + 1/u$) and lens ($1/f = 1/v - 1/u$) formulas.
+- **Formula Calculator:** A built-in utility to instantly solve equations for missing variables.
 
-## Still to add
-Experiment zone, mirror/lens comparison, real-life application cards, Predict-the-Image game, quizzes, Teacher Mode.
+## 💻 Technology Stack
+- **HTML5** (Semantic structure)
+- **CSS3** (Glassmorphism, CSS Variables, Responsive Grid/Flexbox)
+- **Vanilla JavaScript** (Physics engine, DOM manipulation, Game logic)
+- **HTML5 Canvas API** (Real-time ray tracing and particle animations - no external libraries used)
+
+## 🚀 Installation & Usage
+1. Download or clone this repository.
+2. Ensure all files are in the same directory:
+   - `index.html`
+   - `style.css`
+   - `script.js`
+   - `README.md`
+3. Open `index.html` in any modern web browser (Chrome, Firefox, Safari, Edge). No local server is required.
+4. **Optional:** Host directly on GitHub Pages for easy sharing with students.
+
+## 📂 Project Structure
+```text
+optics-lab/
+│
+├── index.html       # The main webpage containing all UI structure
+├── style.css        # All styling, animations, and responsive design
+├── script.js        # The physics engine, canvas drawing, and interactive logic
+└── README.md        # Project documentation
