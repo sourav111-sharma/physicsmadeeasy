@@ -1,157 +1,427 @@
-/* OPTICS LAB – real-time ray tracing. Cartesian sign convention, origin at P / O.
-   Mirror: 1/v + 1/u = 1/f, m = -v/u.  Lens: 1/v - 1/u = 1/f, m = v/u.
-   Concave mirror f<0, convex mirror f>0, convex lens f>0, concave lens f<0. */
-const $ = s => document.querySelector(s), cv = $('#cv'), g = cv.getContext('2d');
+// --- Theme Handling ---
+const themeBtn = document.getElementById('theme-toggle');
+themeBtn.addEventListener('click', () => {
+    const currentTheme = document.body.getAttribute('data-theme');
+    document.body.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
+    drawLab(); 
+    initParticles(); // Refresh background color logic
+});
 
-const TERMS = [
- ['Reflection', 'Light bounces back from a smooth surface. Angle of incidence = angle of reflection. Example: your face in a mirror.'],
- ['Refraction', 'Light bends when it passes from one medium to another, such as air to glass. Example: a straw looks bent in water.'],
- ['Spherical mirror', 'A mirror that is part of a hollow sphere. Concave curves inward, convex bulges outward.'],
- ['Spherical lens', 'A piece of glass with spherical surfaces. Convex lenses converge light, concave lenses diverge it.'],
- ['Pole and principal axis', 'The pole (P) is the centre of the mirror. The principal axis is the line through P and the centre of curvature.'],
- ['Centre of curvature (C)', 'The centre of the sphere the mirror was cut from.'],
- ['Radius of curvature (R)', 'The radius of that sphere. For a mirror, R = 2f.'],
- ['Principal focus (F)', 'The point where rays parallel to the axis meet (or seem to come from) after reflection or refraction.'],
- ['Focal length (f)', 'The distance from the pole or optical centre to the principal focus.'],
- ['Optical centre (O)', 'The centre of a lens. A ray through O goes straight without bending.'],
- ['Aperture', 'The width of the mirror or lens that is open to light. A large aperture gives brighter but less sharp images.']
-];
-$('#terms').innerHTML = TERMS.map(([t, x]) => `<div class="card"><h3>${t}</h3><p>${x}</p></div>`).join('');
+// --- Background Particle Animation ---
+const bgCanvas = document.getElementById('bgCanvas');
+const bgCtx = bgCanvas.getContext('2d');
+let particles = [];
 
-const WHY = {
- cm: 'A concave mirror converges parallel rays at F. Beyond F the image is real and inverted; between F and P it is virtual, erect and magnified (a shaving mirror).',
- vm: 'A convex mirror always diverges light. The reflected rays never meet, but their backward extensions (dashed) meet behind the mirror, so the image is always virtual, erect and diminished and lies between P and F.',
- cl: 'A convex lens converges rays. Beyond F₁ the image is real and inverted; between F₁ and O it is virtual, erect and magnified (a magnifying glass).',
- vl: 'A concave lens always diverges light. The refracted rays never meet, but their backward extensions (dashed) meet on the object side, so the image is always virtual, erect and diminished and lies between O and F.'
-};
-const S = {type: 'cm', d: 40, F: 15, h: 5, inf: false, rays: true, play: false};
-
-function info() {
-  const {type, d, F, inf} = S, mir = type[1] == 'm', f = (type == 'cm' || type == 'vl') ? -F : F;
-  let v, m;
-  if (inf) { v = f; m = 0; }
-  else {
-    const k = 1 / f + (mir ? 1 / d : -1 / d);
-    v = Math.abs(k) < 1e-9 ? Infinity : 1 / k;
-    m = isFinite(v) ? (mir ? v / d : -v / d) : Infinity;
-  }
-  return {mir, f, v, m, real: isFinite(v) && (mir ? v < 0 : v > 0)};
-}
-
-function draw() {
-  const W = cv.width, H = cv.height, x0 = W * .6, y0 = H / 2, s = (x0 - 25) / 90;
-  const st = getComputedStyle(document.body), tx = st.getPropertyValue('--tx'), mu = st.getPropertyValue('--mut');
-  const X = x => x0 + x * s, Y = y => y0 - y * s, xl = -x0 / s, xr = (W - x0) / s;
-  const {d, h, inf, type} = S, {mir, f, v, m, real} = info(), fin = isFinite(v), af = Math.abs(f);
-  g.clearRect(0, 0, W, H); g.font = '13px sans-serif'; g.lineCap = 'round';
-  const L = (a, b, c, e, col, dash, w) => {
-    g.beginPath(); g.setLineDash(dash ? [6, 5] : []); g.strokeStyle = col; g.lineWidth = w || 1.8;
-    g.moveTo(X(a), Y(b)); g.lineTo(X(c), Y(e)); g.stroke(); g.setLineDash([]);
-  };
-  const ray = (px, py, dx, dy, xe, dash, col) => L(px, py, xe, py + dy * (xe - px) / dx, col, dash);
-  // outgoing ray from the surface point (0,py): solid to the image (real) or the edge (diverging), dashed backwards if virtual
-  const out = (py, dx, dy, col) => {
-    ray(0, py, dx, dy, fin && real ? v : (dx < 0 ? xl : xr), false, col);
-    if (fin && !real) ray(0, py, dx, dy, v, true, col);
-  };
-  const arrow = (x, y, col, dash) => {
-    L(x, 0, x, y, col, dash, 3); const q = y > 0 ? 1 : -1;
-    g.beginPath(); g.fillStyle = col; g.moveTo(X(x), Y(y)); g.lineTo(X(x) - 5, Y(y) + 9 * q); g.lineTo(X(x) + 5, Y(y) + 9 * q); g.fill();
-  };
-  L(xl, 0, xr, 0, mu, true, 1);
-  // mirror or lens
-  const lh = H * .42; g.strokeStyle = '#22d3ee'; g.lineWidth = 3; g.setLineDash([]);
-  if (mir) {
-    const r = 2 * F * s, th = Math.asin(Math.min(.97, lh / r)); g.beginPath();
-    f < 0 ? g.arc(X(2 * f), y0, r, -th, th) : g.arc(X(2 * f), y0, r, Math.PI - th, Math.PI + th); g.stroke();
-  } else {
-    const b = f > 0 ? 14 : -14, xp = X(0), w = f > 0 ? 0 : 9;
-    g.beginPath(); g.moveTo(xp + w, y0 - lh); g.quadraticCurveTo(xp + 2 * b, y0, xp + w, y0 + lh);
-    g.lineTo(xp - w, y0 + lh); g.quadraticCurveTo(xp - 2 * b, y0, xp - w, y0 - lh); g.closePath();
-    g.fillStyle = 'rgba(34,211,238,.18)'; g.fill(); g.stroke();
-  }
-  // markers
-  g.fillStyle = tx; g.textAlign = 'center';
-  const marks = mir ? [['P', 0], ['F', f], ['C', 2 * f]] : [['O', 0], ['F₁', -af], ['F₂', af], ['2F₁', -2 * af], ['2F₂', 2 * af]];
-  marks.forEach(([t, x]) => { g.beginPath(); g.arc(X(x), y0, 3, 0, 7); g.fill(); g.fillText(t, X(x), y0 + 18); });
-  // rays
-  const C = ['#fbbf24', '#34d399', '#f472b6'], par = y => mir ? [-af, y * Math.sign(f)] : [af, -y * Math.sign(f)];
-  if (inf) {
-    if (S.rays) [h, h * .45, -h * .45, -h].forEach(y => { L(xl, y, 0, y, C[0]); const [dx, dy] = par(y); out(y, dx, dy, C[0]); });
-    g.fillStyle = mu; g.textAlign = 'left'; g.fillText('Object at infinity: parallel rays', 12, 22);
-    if (fin) { g.fillStyle = '#a78bfa'; g.beginPath(); g.arc(X(v), Y(0), 5, 0, 7); g.fill(); }
-  } else {
-    if (S.rays) {
-      L(-d, h, 0, h, C[0]); let [dx, dy] = par(h); out(h, dx, dy, C[0]);                       // ray 1: parallel to axis
-      L(-d, h, 0, 0, C[1]); out(0, mir ? -d : d, -h, C[1]);                                    // ray 2: to P / through O
-      const den = mir ? d + f : d - f;                                                         // ray 3: through (or towards) a focus
-      if (Math.abs(den) > 1e-9) {
-        const y3 = mir ? h * f / den : -h * f / den; L(-d, h, 0, y3, C[2]); out(y3, mir ? -1 : 1, 0, C[2]);
-        if (type == 'vm') L(0, y3, f, 0, C[2], true); if (type == 'vl') L(0, y3, -f, 0, C[2], true);
-      }
+function initParticles() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    particles = [];
+    const isLight = document.body.getAttribute('data-theme') === 'light';
+    const numParticles = window.innerWidth < 768 ? 40 : 80;
+    
+    for (let i = 0; i < numParticles; i++) {
+        particles.push({
+            x: Math.random() * bgCanvas.width,
+            y: Math.random() * bgCanvas.height,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
+            radius: Math.random() * 2 + 1,
+            color: isLight ? `rgba(2, 132, 199, ${Math.random()*0.3})` : `rgba(0, 242, 254, ${Math.random()*0.5})`
+        });
     }
-    arrow(-d, h, '#22d3ee', false);
-    if (fin) arrow(v, m * h, '#a78bfa', !real);
-  }
-  g.fillStyle = tx; g.textAlign = 'left'; g.fillText('Drag to move the object', 12, H - 12);
 }
 
-function ui() {
-  const {mir, f, v, m, real} = info(), {d, h, inf} = S, fin = isFinite(v), a = Math.abs(m);
-  const f1 = x => isFinite(x) ? x.toFixed(1) : '∞';
-  $('#od').textContent = inf ? '∞' : d.toFixed(1) + ' cm'; $('#of').textContent = S.F.toFixed(1) + ' cm'; $('#oh').textContent = h.toFixed(1) + ' cm';
-  const size = inf ? 'Point-sized' : !fin ? 'Highly magnified' : a > 1.005 ? 'Magnified' : a < .995 ? 'Diminished' : 'Same size';
-  const R = [['Object distance u (cm)', inf ? '−∞' : f1(-d)], ['Image distance v (cm)', f1(v)], ['Focal length f (cm)', f1(f)],
-    ['Magnification m', inf ? '→ 0' : fin ? m.toFixed(2) : '∞'], ['Image height h′ (cm)', inf ? '≈ 0' : fin ? (m * h).toFixed(2) : '∞'],
-    ['Nature', fin ? (real ? 'Real' : 'Virtual') : 'At infinity'], ['Orientation', inf ? 'Inverted (real) / erect (virtual)' : fin ? (m < 0 ? 'Inverted' : 'Erect') : '—'], ['Size', size]];
-  $('#read').innerHTML = R.map(([k, x]) => `<div class="card"><b>${x}</b><span>${k}</span></div>`).join('');
-  $('#why').textContent = WHY[S.type];
+function animateParticles() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > bgCanvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > bgCanvas.height) p.vy *= -1;
+        
+        bgCtx.beginPath();
+        bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = p.color;
+        bgCtx.fill();
+    });
+    requestAnimationFrame(animateParticles);
 }
-function sync() { $('#d').value = S.d; $('#F').value = S.F; $('#h').value = S.h; draw(); ui(); }
+window.addEventListener('resize', initParticles);
+initParticles();
+animateParticles();
 
-function presets() {
-  const mir = S.type[1] == 'm', two = S.type[0] == 'v';
-  const L = two ? [['At infinity', null], ['At a finite distance', 2]] :
-    (mir ? ['At infinity', 'Beyond C', 'At C', 'Between C and F', 'At F', 'Between F and P'] :
-      ['At infinity', 'Beyond 2F₁', 'At 2F₁', 'Between F₁ and 2F₁', 'At F₁', 'Between F₁ and O']).map((t, i) => [t, [null, 3, 2, 1.5, 1, .5][i]]);
-  $('#presets').innerHTML = L.map(([t, k], i) => `<button data-k="${k}">${t}</button>`).join('');
+// --- Virtual Lab Physics Engine ---
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const width = canvas.width;
+const height = canvas.height;
+const centerX = width / 2;
+const centerY = height / 2;
+
+// UI Elements mapping
+const ui = {
+    uSlider: document.getElementById('u-slider'),
+    fSlider: document.getElementById('f-slider'),
+    hSlider: document.getElementById('h-slider'),
+    device: document.getElementById('device-select'),
+    mode: document.getElementById('mode-select'),
+    uVal: document.getElementById('u-val'),
+    fVal: document.getElementById('f-val'),
+    hVal: document.getElementById('h-val'),
+    vStat: document.getElementById('v-stat'),
+    mStat: document.getElementById('m-stat'),
+    natureStat: document.getElementById('nature-stat'),
+    guideText: document.getElementById('guide-text')
+};
+
+let state = { u: -150, f: 100, h: 50, device: 'concave-mirror', isDragging: false };
+
+// Event Listeners
+['uSlider', 'fSlider', 'hSlider'].forEach(key => {
+    ui[key].addEventListener('input', (e) => {
+        state[key[0]] = parseInt(e.target.value);
+        updateSim();
+    });
+});
+ui.device.addEventListener('change', (e) => { state.device = e.target.value; updateSim(); });
+ui.mode.addEventListener('change', (e) => {
+    if (e.target.value === 'guided') {
+        ui.guideText.classList.remove('hidden');
+        checkGuidedGoal();
+    } else {
+        ui.guideText.classList.add('hidden');
+    }
+});
+
+// Dragging Logic
+canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const clickU = (e.clientX - rect.left) * scaleX - centerX;
+    if(Math.abs(clickU - state.u) < 40) state.isDragging = true;
+});
+canvas.addEventListener('mousemove', (e) => {
+    if(state.isDragging) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        let newU = (e.clientX - rect.left) * scaleX - centerX;
+        if(newU >= -10) newU = -10; 
+        if(newU <= -400) newU = -400;
+        state.u = newU;
+        ui.uSlider.value = Math.round(state.u);
+        updateSim();
+    }
+});
+window.addEventListener('mouseup', () => state.isDragging = false);
+window.addEventListener('mouseleave', () => state.isDragging = false);
+
+// Calculation Engine
+function calculateImage() {
+    let v, m, nature;
+    let f_val = state.f; 
+    
+    // Cartesian convention application
+    if (state.device === 'concave-mirror' || state.device === 'concave-lens') f_val = -state.f; 
+
+    if (state.device.includes('mirror')) {
+        // 1/v = 1/f - 1/u
+        v = (state.u * f_val) / (state.u - f_val);
+        m = -v / state.u;
+    } else {
+        // 1/v = 1/f + 1/u
+        v = (state.u * f_val) / (state.u + f_val);
+        m = v / state.u;
+    }
+
+    if (Math.abs(state.u) === Math.abs(f_val) && state.device.includes('mirror')) {
+        v = Infinity; m = Infinity; nature = "At Infinity";
+    } else {
+        if (state.device.includes('mirror')) {
+            nature = v < 0 ? "Real, Inverted" : "Virtual, Erect";
+        } else {
+            nature = v > 0 ? "Real, Inverted" : "Virtual, Erect";
+        }
+    }
+
+    return { v, m, nature, f_val };
 }
-$('#presets').onclick = e => {
-  const k = e.target.dataset.k; if (k === undefined) return;
-  S.play = false; S.inf = k == 'null'; if (!S.inf) S.d = Math.min(90, +k * S.F); sync();
-};
-$('#tabs').onclick = e => {
-  if (!e.target.dataset.t) return;
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b == e.target));
-  S.type = e.target.dataset.t; S.inf = false; S.d = 40; S.play = false; presets(); sync();
-};
-['d', 'F', 'h'].forEach(k => $('#' + k).oninput = e => { S[k] = +e.target.value; if (k == 'd') S.inf = false; sync(); });
-$('#rays').onchange = e => { S.rays = e.target.checked; draw(); };
-$('#play').onclick = () => S.play = true; $('#pause').onclick = () => S.play = false;
-$('#reset').onclick = () => { Object.assign(S, {d: 40, F: 15, h: 5, inf: false, play: false}); sync(); };
-$('#theme').onclick = () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme == 'dark' ? 'light' : 'dark'; draw(); };
 
-let drag = 0;
-const pt = e => {
-  const r = cv.getBoundingClientRect(), px = (e.clientX - r.left) * cv.width / r.width, x0 = cv.width * .6, s = (x0 - 25) / 90;
-  S.d = Math.min(90, Math.max(1, (x0 - px) / s)); S.inf = false; S.play = false; sync();
-};
-cv.onpointerdown = e => { drag = 1; cv.setPointerCapture(e.pointerId); pt(e); };
-cv.onpointermove = e => drag && pt(e); cv.onpointerup = () => drag = 0;
-(function loop() { if (S.play) { S.d -= .25; if (S.d < 2) S.d = 90; S.inf = false; sync(); } requestAnimationFrame(loop); })();
-const fit = () => { cv.width = cv.clientWidth; draw(); };
-addEventListener('resize', fit);
+// Drawing Primitives
+function drawArrow(x, yBase, h, color, dashed=false) {
+    if(h === Infinity || isNaN(h)) return;
+    const clampedH = Math.max(Math.min(h, 250), -250); // Visual clamp
+    ctx.beginPath();
+    ctx.setLineDash(dashed ? [6, 6] : []);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 4;
+    ctx.moveTo(x, yBase);
+    ctx.lineTo(x, yBase - clampedH);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(x, yBase - clampedH);
+    ctx.lineTo(x - 6, yBase - clampedH + (clampedH > 0 ? 12 : -12));
+    ctx.lineTo(x + 6, yBase - clampedH + (clampedH > 0 ? 12 : -12));
+    ctx.fill();
+    ctx.setLineDash([]);
+}
 
-// formula calculator
-$('#calc').onclick = () => {
-  const a = $('#ct').value == 'm' ? 1 : -1, n = id => $(id).value === '' ? null : +$(id).value;
-  let f = n('#cf'), u = n('#cu'), v = n('#cvv'), o;
-  if ([f, u, v].filter(x => x === null).length != 1) o = 'Fill exactly two of f, u and v, and leave one empty.';
-  else {
-    if (f === null) f = 1 / (1 / v + a / u); else if (v === null) v = 1 / (1 / f - a / u); else u = a / (1 / f - 1 / v);
-    const m = a == 1 ? -v / u : v / u;
-    o = `f = ${f.toFixed(2)} cm, u = ${u.toFixed(2)} cm, v = ${v.toFixed(2)} cm, m = ${m.toFixed(2)}`;
-  }
-  $('#cout').textContent = o;
-};
-presets(); fit(); ui();
+function drawLine(x1, y1, x2, y2, color, dashed=false) {
+    ctx.beginPath();
+    ctx.setLineDash(dashed ? [5, 5] : []);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+// Render Lab
+function drawLab() {
+    ctx.clearRect(0, 0, width, height);
+    const isLight = document.body.getAttribute('data-theme') === 'light';
+    const colors = {
+        axis: isLight ? '#94a3b8' : '#334155',
+        device: isLight ? '#0f172a' : '#f8fafc',
+        ray: isLight ? '#dc2626' : '#ef4444',
+        ext: isLight ? '#64748b' : '#94a3b8',
+        text: isLight ? '#000' : '#fff'
+    };
+
+    // Axis
+    drawLine(0, centerY, width, centerY, colors.axis);
+
+    let { v, m, nature, f_val } = calculateImage();
+
+    // Device Drawing
+    ctx.strokeStyle = colors.device;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    if (state.device === 'concave-mirror') ctx.arc(centerX + 200, centerY, 200, Math.PI - 0.4, Math.PI + 0.4);
+    else if (state.device === 'convex-mirror') ctx.arc(centerX - 200, centerY, 200, -0.4, 0.4);
+    else if (state.device === 'convex-lens') ctx.ellipse(centerX, centerY, 15, 100, 0, 0, 2 * Math.PI);
+    else if (state.device === 'concave-lens') {
+        ctx.moveTo(centerX - 12, centerY - 100); ctx.lineTo(centerX + 12, centerY - 100);
+        ctx.quadraticCurveTo(centerX - 5, centerY, centerX + 12, centerY + 100);
+        ctx.lineTo(centerX - 12, centerY + 100); ctx.quadraticCurveTo(centerX + 5, centerY, centerX - 12, centerY - 100);
+    }
+    ctx.stroke();
+
+    // Focal & Center Points
+    ctx.fillStyle = colors.text;
+    ctx.font = "bold 16px Inter";
+    ctx.fillText("P/O", centerX + 8, centerY + 20);
+    
+    [-1, 1].forEach(sign => {
+        let px = centerX + sign * Math.abs(state.f);
+        ctx.beginPath(); ctx.arc(px, centerY, 4, 0, Math.PI*2); ctx.fill();
+        ctx.fillText(sign === Math.sign(f_val) ? "F" : "F'", px - 5, centerY + 25);
+        
+        let cx = centerX + sign * 2 * Math.abs(state.f);
+        ctx.beginPath(); ctx.arc(cx, centerY, 4, 0, Math.PI*2); ctx.fill();
+        ctx.fillText(sign === Math.sign(f_val) ? "C/2F" : "2F'", cx - 15, centerY + 25);
+    });
+
+    // Arrows
+    let objX = centerX + state.u;
+    drawArrow(objX, centerY, state.h, '#10b981'); // Object (Green)
+
+    if (v !== Infinity) {
+        let imgX = centerX + v;
+        drawArrow(imgX, centerY, state.h * m, '#3b82f6', nature.includes("Virtual")); // Image (Blue)
+    }
+
+    // Simplified Ray Logic (Visual approximation matching math)
+    let tipY = centerY - state.h;
+    // Ray 1 (Parallel)
+    drawLine(objX, tipY, centerX, tipY, colors.ray);
+    // Ray 2 (Through Pole)
+    drawLine(objX, tipY, centerX, centerY, colors.ray);
+    
+    // In a full commercial engine we map intersection perfectly to Canvas coordinates,
+    // For this educational UI, drawing the lines pointing strictly to the calculated Image tip is the cleanest method.
+    if(v !== Infinity && Math.abs(v) < 1000) {
+        let imgTipY = centerY - (state.h * m);
+        let imgX = centerX + v;
+        let isVirtual = nature.includes("Virtual");
+        
+        if (state.device.includes('mirror')) {
+            // Ray 1 reflecting
+            drawLine(centerX, tipY, imgX, imgTipY, isVirtual ? colors.ext : colors.ray, isVirtual);
+            if(!isVirtual) drawLine(centerX, tipY, centerX - 800, tipY + (imgTipY - tipY)/(v)*(-800), colors.ray);
+            
+            // Ray 2 reflecting
+            drawLine(centerX, centerY, imgX, imgTipY, isVirtual ? colors.ext : colors.ray, isVirtual);
+            if(!isVirtual) drawLine(centerX, centerY, centerX - 800, centerY + (imgTipY - centerY)/(v)*(-800), colors.ray);
+        } else {
+            // Lens Refracting
+            drawLine(centerX, tipY, imgX, imgTipY, isVirtual ? colors.ext : colors.ray, isVirtual);
+            if(!isVirtual) drawLine(centerX, tipY, imgX + 800, imgTipY + (imgTipY - tipY)/(v)*(800), colors.ray);
+            
+            drawLine(centerX, centerY, imgX, imgTipY, isVirtual ? colors.ext : colors.ray, isVirtual);
+            if(!isVirtual) drawLine(centerX, centerY, imgX + 800, imgTipY + (imgTipY - centerY)/(v)*(800), colors.ray);
+        }
+    }
+}
+
+function checkGuidedGoal() {
+    if(ui.mode.value !== 'guided') return;
+    const targetU = -2 * state.f; // Place at C
+    if(Math.abs(state.u - targetU) < 5) {
+        ui.guideText.innerText = "⭐ Excellent! Object is at C. Notice the image is real, inverted, and same size!";
+        ui.guideText.style.color = "var(--success)";
+    } else {
+        ui.guideText.innerText = "Challenge: Drag the object exactly to Center of Curvature (C/2F).";
+        ui.guideText.style.color = "var(--secondary)";
+    }
+}
+
+function updateSim() {
+    ui.uVal.innerText = Math.round(state.u);
+    ui.fVal.innerText = state.f;
+    ui.hVal.innerText = state.h;
+    
+    let stats = calculateImage();
+    ui.vStat.innerText = stats.v === Infinity ? "Infinity" : `${stats.v.toFixed(1)} cm`;
+    ui.mStat.innerText = stats.m === Infinity ? "Infinity" : stats.m.toFixed(2);
+    ui.natureStat.innerText = stats.nature;
+    
+    checkGuidedGoal();
+    drawLab();
+}
+updateSim();
+
+// --- Hero Animation (Mini Lens) ---
+const hCanvas = document.getElementById('heroCanvas');
+const hCtx = hCanvas.getContext('2d');
+let hTime = 0;
+function animateHero() {
+    hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+    const hcX = hCanvas.width/2; const hcY = hCanvas.height/2;
+    
+    // Lens
+    hCtx.beginPath();
+    hCtx.ellipse(hcX, hcY, 20, 100, 0, 0, Math.PI*2);
+    hCtx.strokeStyle = '#00f2fe';
+    hCtx.lineWidth = 4;
+    hCtx.stroke();
+
+    // Sine wave light ray
+    hCtx.beginPath();
+    let waveOffset = Math.sin(hTime) * 40;
+    hCtx.moveTo(hcX - 200, hcY + waveOffset);
+    hCtx.lineTo(hcX, hcY + waveOffset);
+    hCtx.lineTo(hcX + 200, hcY); // Focus effect
+    hCtx.strokeStyle = '#a855f7';
+    hCtx.lineWidth = 3;
+    hCtx.stroke();
+    
+    hTime += 0.05;
+    requestAnimationFrame(animateHero);
+}
+animateHero();
+
+// --- Advanced Quiz Module ---
+const quizData = [
+    { q: "Where should an object be placed in front of a convex lens to get a real image of the same size?", opts: ["At Principal Focus (F)", "At twice the focal length (2F)", "Between F and 2F", "At Infinity"], ans: 1, exp: "When placed at 2F, the image forms at 2F on the other side, real, inverted, and same size." },
+    { q: "A concave mirror produces a virtual, erect, and magnified image. Where is the object located?", opts: ["Beyond C", "At C", "Between F and P", "At Focus (F)"], ans: 2, exp: "This is the only case where a concave mirror forms a virtual image (used in shaving mirrors)." },
+    { q: "According to Sign Convention, what is the focal length of a Concave Lens?", opts: ["Always Positive (+)", "Always Negative (-)", "Depends on Object", "Zero"], ans: 1, exp: "A concave lens has a virtual principal focus on the left side (against incident light), so 'f' is negative." }
+];
+let currentQ = 0;
+let score = 0;
+
+function renderQuiz() {
+    const q = quizData[currentQ];
+    document.getElementById('quiz-progress').innerText = `Question ${currentQ + 1} of ${quizData.length}`;
+    document.getElementById('quiz-score').innerText = `Score: ${score}`;
+    document.getElementById('quiz-question').innerText = q.q;
+    document.getElementById('quiz-explanation').classList.add('hidden');
+    document.getElementById('next-btn').classList.add('hidden');
+    
+    const optsGrid = document.getElementById('quiz-options');
+    optsGrid.innerHTML = "";
+    q.opts.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => handleAnswer(index, btn);
+        optsGrid.appendChild(btn);
+    });
+}
+
+function handleAnswer(selectedIndex, btnNode) {
+    const q = quizData[currentQ];
+    const buttons = document.querySelectorAll('.option-btn');
+    buttons.forEach(b => b.onclick = null); // disable clicks
+    
+    if (selectedIndex === q.ans) {
+        btnNode.classList.add('correct');
+        score++;
+    } else {
+        btnNode.classList.add('wrong');
+        buttons[q.ans].classList.add('correct'); // Highlight actual correct
+    }
+    
+    const exp = document.getElementById('quiz-explanation');
+    exp.innerText = q.exp;
+    exp.classList.remove('hidden');
+    
+    document.getElementById('next-btn').classList.remove('hidden');
+    if (currentQ === quizData.length - 1) {
+        document.getElementById('next-btn').innerText = "Finish Quiz";
+    }
+}
+
+function nextQuestion() {
+    if (currentQ < quizData.length - 1) {
+        currentQ++;
+        renderQuiz();
+    } else {
+        document.getElementById('quiz-app').innerHTML = `<h3>Quiz Completed!</h3><p style="font-size:1.2rem; margin-top:1rem;">Your Final Score: <span style="color:var(--primary); font-weight:bold;">${score} / ${quizData.length}</span></p><button class="btn btn-outline" style="margin-top:1rem;" onclick="location.reload()">Restart Quiz</button>`;
+    }
+}
+renderQuiz();
+
+// --- Formula Calculator ---
+function calculateFormula() {
+    const type = document.getElementById('calc-type').value;
+    const fIn = document.getElementById('calc-f').value;
+    const uIn = document.getElementById('calc-u').value;
+    const vIn = document.getElementById('calc-v').value;
+    const resBox = document.getElementById('calc-result');
+
+    let f = parseFloat(fIn); let u = parseFloat(uIn); let v = parseFloat(vIn);
+    let filled = [!isNaN(f), !isNaN(u), !isNaN(v)].filter(Boolean).length;
+
+    if (type === 'mag') {
+        if (!isNaN(u) && !isNaN(v)) {
+            resBox.innerHTML = `Magnification (m) = <span>${(-v/u).toFixed(2)} (Mirror) or ${(v/u).toFixed(2)} (Lens)</span>`;
+            return;
+        } else {
+            resBox.innerHTML = "<span style='color:var(--danger)'>Provide both u and v for Magnification.</span>";
+            return;
+        }
+    }
+
+    if (filled !== 2) {
+        resBox.innerHTML = "<span style='color:var(--danger)'>Error: Leave exactly ONE input blank.</span>";
+        return;
+    }
+
+    try {
+        if (isNaN(f)) {
+            let res = type === 'mirror' ? (u * v)/(u + v) : (u * v)/(u - v);
+            resBox.innerHTML = `Calculated Focal Length (f) = <span>${res.toFixed(2)}</span>`;
+        } else if (isNaN(v)) {
+            let res = type === 'mirror' ? (u * f)/(u - f) : (u * f)/(u + f);
+            resBox.innerHTML = `Calculated Image Dist (v) = <span>${res.toFixed(2)}</span>`;
+        } else if (isNaN(u)) {
+            let res = type === 'mirror' ? (v * f)/(v - f) : (v * f)/(f - v);
+            resBox.innerHTML = `Calculated Object Dist (u) = <span>${res.toFixed(2)}</span>`;
+        }
+    } catch(e) {
+        resBox.innerHTML = "<span style='color:var(--danger)'>Mathematical Error.</span>";
+    }
+}
