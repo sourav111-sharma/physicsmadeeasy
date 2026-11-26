@@ -1,43 +1,30 @@
+# LinearLab 10 — Interactive Linear Equations Studio (v2)
 
-# OPTICS LAB v2.0 – Advanced Interactive Physics
+A modern, animated Class 10 Mathematics web studio for learning **Pair of Linear Equations in Two Variables** (Intersecting, Parallel, Coincident, Consistent, and Inconsistent systems) with **exact fraction arithmetic**.
 
-**"Don't Just Learn Physics. See It, Experiment With It and Understand It."**
+## What's New in v2
 
-Optics Lab is a premium, interactive educational platform designed for Class 10 and Class 12 Physics students. Version 2.0 introduces a fully rewritten mathematical ray-tracing engine, a guided learning mode, and interactive visualizations to help students master the complexities of light reflection and refraction.
+- **Exact Fraction Coefficient Mode (`p/q`)**: Switch between Integer/Decimal Sliders and stacked Numerator/Denominator inputs, or type fractions like `3/4` directly into text inputs. All ratios (`a₁/a₂`, `b₁/b₂`, `c₁/c₂`) and intersection points are computed with exact reduced fractions.
+- **Live Canvas Visualization Effects**:
+  - Smooth animated line morphing when switching presets or adjusting values.
+  - Glowing pulsing intersection beacon with dashed axis projection lines.
+  - Animated constant-gap indicator for Parallel lines and flowing energy dashes for Coincident lines.
+  - Interactive hover crosshair with live `(x, y)` coordinates, intercept dots, and zoom controls (`±4` to `±24`).
+- **Step-by-Step Math Breakdown**: Live Slope-Intercept form (`y = mx + k`), exact ratio division, and determinant solution steps.
+- **Professional UI & Dark Mode**: Sticky glassmorphic navbar, Light/Dark theme toggle, scroll-reveal animations, and a 6-question quiz (including fraction questions, streak counter, confetti celebration, and a "Visualize This in Graph Studio" button).
 
-## ✨ What's New in Version 2.0?
-- **Guided Laboratory Mode:** Challenges students to place objects at specific points (like the Center of Curvature) to achieve specific image results, moving beyond passive observation.
-- **Interactive Sign Convention Visualizer:** A dedicated visual coordinate system that demystifies positive and negative values for object distance, image distance, and focal length.
-- **Interactive Glossary:** Key physics terms feature hoverable tooltips that instantly explain fundamental concepts without cluttering the UI.
-- **Advanced Physics Quiz Engine:** A multi-question assessment module with score tracking and detailed explanations for every correct and incorrect answer.
-- **Immersive UI/UX:** Features a dynamic photon-particle animated background, glassmorphism design elements, and seamless light/dark mode toggling.
+## Folder Structure
 
-## 🔬 Core Features
-- **Virtual Optics Lab:** Real-time HTML5 Canvas-based ray tracing for Concave Mirrors, Convex Mirrors, Convex Lenses, and Concave Lenses. Drag-and-drop the object arrow to instantly see the updated image and rays.
-- **Live Telemetry Engine:** Calculates exact image distance ($v$) and magnification ($m$) using the mirror ($1/f = 1/v + 1/u$) and lens ($1/f = 1/v - 1/u$) formulas.
-- **Formula Calculator:** A built-in utility to instantly solve equations for missing variables.
-
-## 💻 Technology Stack
-- **HTML5** (Semantic structure)
-- **CSS3** (Glassmorphism, CSS Variables, Responsive Grid/Flexbox)
-- **Vanilla JavaScript** (Physics engine, DOM manipulation, Game logic)
-- **HTML5 Canvas API** (Real-time ray tracing and particle animations - no external libraries used)
-
-## 🚀 Installation & Usage
-1. Download or clone this repository.
-2. Ensure all files are in the same directory:
-   - `index.html`
-   - `style.css`
-   - `script.js`
-   - `README.md`
-3. Open `index.html` in any modern web browser (Chrome, Firefox, Safari, Edge). No local server is required.
-4. **Optional:** Host directly on GitHub Pages for easy sharing with students.
-
-## 📂 Project Structure
 ```text
-optics-lab/
-│
-├── index.html       # The main webpage containing all UI structure
-├── style.css        # All styling, animations, and responsive design
-├── script.js        # The physics engine, canvas drawing, and interactive logic
-└── README.md        # Project documentation
+linear-equations-website-v2/
+├── index.html   # Page structure, semantic sections, and fraction/slider UI
+├── style.css    # Light/Dark themes, responsive layout, animations, stacked math styling
+├── script.js    # Exact Fraction class, smooth animated Canvas engine, and 6-question quiz
+└── README.md    # Documentation and GitHub Pages instructions
+```
+
+## Deploy to GitHub Pages
+
+1. Unzip `linear-equations-website-v2.zip`.
+2. Upload `index.html`, `style.css`, `script.js`, and `README.md` to the root of your GitHub repository.
+3. Open **Settings → Pages**, choose **Branch: `main`** and **`/ (root)`**, and click **Save**.
